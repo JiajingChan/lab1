@@ -5,6 +5,8 @@
 char *buffer;
 int count[NUM_CHARS] = {0}; 
 void computer_histogram(char *buffer, int file_size, int num_threads){
+    int batch_size = file_size/num_threads;
+    printf("batch_size: %d\n", batch_size);
     if (num_threads == 0){//sequential
         for (int i = 0; i < file_size; i++)
             count[(int)buffer[i] - (int)'a']++;
@@ -23,13 +25,16 @@ void computer_histogram(char *buffer, int file_size, int num_threads){
 
         int tid = omp_get_thread_num();
         #pragma omp parallel for
-        for (int i = 0; i < file_size; i++) 
-            local_count[tid][(int)buffer[i] - (int)'a']++;
-        
+        for (int batch_id = 0; batch_id < num_threads; batch_id++){
+            for (int i = batch_id * batch_size; i < (batch_id + 1) * batch_size; i++)
+                local_count[tid][(int)buffer[i] - (int)'a']++;
+        }
         #pragma omp parallel for
-        for (int i = 0; i < NUM_CHARS; i++)
+        for (int i = 0; i < NUM_CHARS; i++){
             for (int t = 0; t < num_threads; t++)
+                #pragma omp atomic
                 count[i] += local_count[t][i];
+        }
         
         #pragma omp parallel for
         for (int i = 0; i < rows; i++)

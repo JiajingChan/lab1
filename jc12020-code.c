@@ -57,7 +57,7 @@ void read_buffer(char *filename, long file_size){
         fputs("File error", stderr);
         exit(1);
     }
-    buffer = (char*) malloc(sizeof(char) * file_size);
+    buffer = (char*) malloc(sizeof(char) * (file_size + 1));
     if (buffer == NULL){
         fputs("Memory error", stderr);
         exit(2);

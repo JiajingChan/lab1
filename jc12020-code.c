@@ -87,14 +87,17 @@ int main(int argc, char *argv[]){
     // Print out histogram
     int max_idx = 0;
     int max = 0;
+    int sum = 0;
     for (int i = 0; i < NUM_CHARS; i++) {
         if (count[i] > max){
             max = count[i];
             max_idx = i;
         }
+        sum += count[i];
         printf("Character '%c' appears %d times.\n", (char)(i+'a'), count[i]);
     }
     printf("%c occurred the most %d times of a total of %ld characters.\n",(char)(max_idx+'a'), count[max_idx], file_size);
     free(buffer);
+    printf("sum = %d", sum);
     return 0;
 }

@@ -5,31 +5,38 @@
 char *buffer;
 int count[NUM_CHARS] = {0}; 
 void computer_histogram(char *buffer, int file_size, int num_threads){
-    // Initialize all local counts to zero
-    int **local_count = NULL;
-    int rows = num_threads+1;
-    int cols = NUM_CHARS;
-    local_count = (int **)malloc(rows * sizeof(int *));
-    for (int i = 0; i < rows; i++) {
-        local_count[i] = (int *)malloc(cols * sizeof(int));
-        for (int j = 0; j < cols; j++)
-            local_count[i][j] = 0;
+    if (num_threads == 0){//sequential
+        for (int i = 0; i < file_size; i++)
+            count[(int)buffer[i] - (int)'a']++;
+        
+    } else {
+        // Initialize all local counts to zero
+        int **local_count = NULL;
+        int rows = num_threads+1;
+        int cols = NUM_CHARS;
+        local_count = (int **)malloc(rows * sizeof(int *));
+        for (int i = 0; i < rows; i++) {
+            local_count[i] = (int *)malloc(cols * sizeof(int));
+            for (int j = 0; j < cols; j++)
+                local_count[i][j] = 0;
+        }
+
+        int tid = omp_get_thread_num();
+        #pragma omp parallel for
+        for (int i = 0; i < file_size; i++) 
+            local_count[tid][(int)buffer[i] - (int)'a']++;
+        
+        #pragma omp parallel for
+        for (int i = 0; i < NUM_CHARS; i++)
+            for (int t = 0; t < num_threads; t++)
+                count[i] += local_count[t][i];
+        
+        #pragma omp parallel for
+        for (int i = 0; i < rows; i++)
+            free(local_count[i]);
+        free(local_count);
     }
 
-    int tid = omp_get_thread_num();
-    #pragma omp parallel for
-    for (int i = 0; i < file_size; i++) 
-        local_count[tid][(int)buffer[i] - (int)'a']++;
-    
-    #pragma omp parallel for
-    for (int i = 0; i < NUM_CHARS; i++)
-        for (int t = 0; t < num_threads; t++)
-            count[i] += local_count[t][i];
-    
-    #pragma omp parallel for
-    for (int i = 0; i < rows; i++)
-        free(local_count[i]);
-    free(local_count);
 
 }
 
